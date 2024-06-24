@@ -1,0 +1,102 @@
+package com.example.medicalmanagement;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.web.bind.annotation.*;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import java.util.List;
+import java.util.Optional;
+
+@SpringBootApplication
+public class MedicalManagementApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(MedicalManagementApplication.class, args);
+    }
+
+    @Bean
+    CommandLineRunner runner(PatientRepository repository) {
+        return args -> {
+            repository.save(new Patient("John Doe", "1234567890"));
+            repository.save(new Patient("Jane Smith", "0987654321"));
+        };
+    }
+}
+
+@Entity
+class Patient {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String contact;
+
+    // Default constructor for JPA
+    public Patient() {
+    }
+
+    public Patient(String name, String contact) {
+        this.name = name;
+        this.contact = contact;
+    }
+
+    // Getters and setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+}
+
+interface PatientRepository extends JpaRepository<Patient, Long> {
+}
+
+@RestController
+@RequestMapping("/patients")
+class PatientController {
+    private final PatientRepository repository;
+
+    public PatientController(PatientRepository repository) {
+        this.repository = repository;
+    }
+
+    @GetMapping
+    public List<Patient> getAllPatients() {
+        return repository.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Optional<Patient> getPatientById(@PathVariable Long id) {
+        return repository.findById(id);
+    }
+
+    @PostMapping
+    public Patient addPatient(@RequestBody Patient patient) {
+        return repository.save(patient);
+    }
+}
